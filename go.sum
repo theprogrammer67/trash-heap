@@ -1,0 +1,4 @@
+github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
+github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
+gitlab.rarus.ru/dr-system/golang/packages/greet.git v1.0.3 h1:ZvhXj0cmkSK/UF5mhOfowBdsD/S9xEe0e/NLR9V0u+M=
+gitlab.rarus.ru/dr-system/golang/packages/greet.git v1.0.3/go.mod h1:58WorAYEV1SfJxEF8N1XLUNMM+jU3ZjtDao8eLCC4gs=
