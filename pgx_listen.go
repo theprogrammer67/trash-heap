@@ -25,7 +25,7 @@ func PgxListen() {
 	}
 	log.Println("listener started")
 
-	listener.Handle("test", &Handler{})
+	listener.Handle("event", &Handler{})
 	listener.Listen(ctx)
 
 	<-ctx.Done()
@@ -37,5 +37,12 @@ type Handler struct{}
 
 func (h *Handler) HandleNotification(ctx context.Context, notification *pgconn.Notification, conn *pgx.Conn) error {
 	log.Println(notification.Payload)
+	return nil
+}
+
+func (h *Handler) HandleBacklog(ctx context.Context, channel string, conn *pgx.Conn) error {
+	log.Println(channel)
+	// read table events and delete it
+
 	return nil
 }
