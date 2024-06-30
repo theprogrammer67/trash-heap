@@ -23,9 +23,9 @@ func PgxListen() {
 	listener.LogError = func(ctx context.Context, err error) {
 		log.Println(err)
 	}
-	log.Println("listener started")
-
 	listener.Handle("event", &Handler{})
+
+	log.Println("listener started")
 	listener.Listen(ctx)
 
 	<-ctx.Done()
@@ -41,7 +41,7 @@ func (h *Handler) HandleNotification(ctx context.Context, notification *pgconn.N
 }
 
 func (h *Handler) HandleBacklog(ctx context.Context, channel string, conn *pgx.Conn) error {
-	log.Println(channel)
+	log.Println("HandleBacklog: " + channel)
 	// read table events and delete it
 
 	return nil
