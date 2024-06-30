@@ -1,7 +1,8 @@
 package main
 
 func main() {
-	TestZeroDate()
+	PgxListen()
+	// TestZeroDate()
 	// TestWorkers()
 	// TestHttpRecover()
 }
