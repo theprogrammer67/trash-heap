@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS events (
 	id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 	event_type TEXT,
     event_data TEXT,
- 	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+ 	created_at timestamp NOT NULL DEFAULT now()
 );
 
 CREATE OR REPLACE FUNCTION on_insert_event()
@@ -38,11 +38,10 @@ CREATE OR REPLACE FUNCTION on_insert_user()
     VOLATILE NOT LEAKPROOF
 AS $$
 BEGIN
---     PERFORM pg_notify('test', new.name);
-	INSERT INTO events (event_type, event_data)
-	VALUES
-		('insert_user', row_to_json(NEW)::text);
-	
+    INSERT INTO events (event_type, event_data)
+    VALUES
+        ('insert_user', row_to_json(NEW)::text);
+
     RETURN NEW;
 END;
 $$;
