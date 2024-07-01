@@ -6,7 +6,8 @@ DROP TABLE IF EXISTS events;
 
 CREATE TABLE IF NOT EXISTS events (
 	id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-	payload	JSONB,
+	event_type TEXT,
+    event_data TEXT,
  	created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -17,7 +18,11 @@ CREATE OR REPLACE FUNCTION on_insert_event()
     VOLATILE NOT LEAKPROOF
 AS $$
 BEGIN
-    PERFORM pg_notify('event', json_build_object('id', NEW.id, 'payload', NEW.payload::text)::text);
+    PERFORM pg_notify('event', json_build_object(
+            'id', NEW.id,
+            'event_type', NEW.event_type,
+            'event_data', NEW.event_data
+        )::text);
     RETURN NEW;
 END;
 $$;
@@ -34,9 +39,9 @@ CREATE OR REPLACE FUNCTION on_insert_user()
 AS $$
 BEGIN
 --     PERFORM pg_notify('test', new.name);
-	INSERT INTO events (payload)
+	INSERT INTO events (event_type, event_data)
 	VALUES
-		(json_build_object('type', 'insert_user', 'data', row_to_json(NEW))::JSONB);
+		('insert_user', row_to_json(NEW)::text);
 	
     RETURN NEW;
 END;

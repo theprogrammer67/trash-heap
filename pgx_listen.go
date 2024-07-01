@@ -81,19 +81,26 @@ func DeleteEvent(ctx context.Context, id uuid.UUID, conn *pgx.Conn) error {
 	return err
 }
 
-func HandleEvent(event Event) error {
-	log.Println(event)
-	return nil
+func HandleEvent(event Event) (err error) {
+	switch event.EventType {
+	case "insert_user":
+		log.Println("Insert user: ", event.EventData)
+	default:
+		err = fmt.Errorf("unknown event: %v", event)
+	}
+
+	return
 }
 
 func GetEvents(ctx context.Context, conn *pgx.Conn) (result []Event, err error) {
-	err = pgxscan.Select(ctx, conn, &result, "SELECT id, payload FROM events ORDER BY created_at")
+	err = pgxscan.Select(ctx, conn, &result, "SELECT id, event_type, event_data FROM events ORDER BY created_at")
 	return
 }
 
 type Event struct {
-	Id      uuid.UUID `json:"id" db:"id"`
-	Payload string    `json:"payload" db:"payload"`
+	Id        uuid.UUID `json:"id" db:"id"`
+	EventType string    `json:"event_type" db:"event_type"`
+	EventData string    `json:"event_data" db:"event_data"`
 }
 
 type User struct {
