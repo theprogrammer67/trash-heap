@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS events (
 	id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 	payload	JSONB,
- 	created_at timestamp NOT NULL DEFAULT now()   
+ 	created_at timestamp NOT NULL DEFAULT now()
 )
 
 CREATE OR REPLACE FUNCTION on_insert_event()
