@@ -14,6 +14,8 @@ require (
 )
 
 require (
+	github.com/georgysavva/scany/v2 v2.1.3
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
