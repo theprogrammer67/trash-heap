@@ -37,34 +37,71 @@ func PgxListen() {
 
 }
 
+const (
+	delEventQuery = `DELETE FROM events WHERE id = $1`
+	selEventQuery = `SELECT id FROM events
+					 WHERE id = $1
+					 FOR UPDATE SKIP LOCKED`
+	selEventsQuery = `SELECT id, event_type, event_data
+					  FROM events
+					  ORDER BY created_at
+					  FOR UPDATE SKIP LOCKED`
+)
+
 type Handler struct{}
 
-func (h *Handler) HandleNotification(ctx context.Context, notification *pgconn.Notification, conn *pgx.Conn) error {
+func (h *Handler) HandleNotification(ctx context.Context, notification *pgconn.Notification, conn *pgx.Conn) (err error) {
 	var event Event
 
-	err := json.Unmarshal([]byte(notification.Payload), &event)
+	err = json.Unmarshal([]byte(notification.Payload), &event)
 	if err == nil {
+		var tx pgx.Tx
+		var rows pgx.Rows
+
+		tx, err = conn.Begin(ctx)
+		if err != nil {
+			return
+		}
+		defer func() {
+			_ = tx.Commit(ctx)
+		}()
+
+		rows, err = tx.Query(ctx, selEventQuery, event.Id)
+		if (err != nil) || (!rows.Next()) {
+			return
+		}
+		rows.Close()
+
 		err = HandleEvent(event)
 		if err == nil {
-			if e := DeleteEvent(ctx, event.Id, conn); e != nil {
+			if e := DeleteEvent(ctx, event.Id, tx); e != nil {
 				err = fmt.Errorf("error deleting event: %v", e)
 			}
 		}
 	}
 
-	return err
+	return
 }
 
-func (h *Handler) HandleBacklog(ctx context.Context, channel string, conn *pgx.Conn) error {
+func (h *Handler) HandleBacklog(ctx context.Context, channel string, conn *pgx.Conn) (err error) {
+	var tx pgx.Tx
 	log.Println("HandleBacklog: " + channel)
 	// read table events and delete it
 
-	events, err := GetEvents(ctx, conn)
+	tx, err = conn.Begin(ctx)
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = tx.Commit(ctx)
+	}()
+
+	events, err := GetEvents(ctx, tx)
 	if err == nil {
 		for _, v := range events {
 			e := HandleEvent(v)
 			if e == nil {
-				e = DeleteEvent(ctx, v.Id, conn)
+				e = DeleteEvent(ctx, v.Id, tx)
 			}
 
 			if (e != nil) && (err == nil) {
@@ -76,8 +113,8 @@ func (h *Handler) HandleBacklog(ctx context.Context, channel string, conn *pgx.C
 	return err
 }
 
-func DeleteEvent(ctx context.Context, id uuid.UUID, conn *pgx.Conn) error {
-	_, err := conn.Exec(ctx, "DELETE FROM events WHERE id = $1", id)
+func DeleteEvent(ctx context.Context, id uuid.UUID, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, delEventQuery, id)
 	return err
 }
 
@@ -92,8 +129,8 @@ func HandleEvent(event Event) (err error) {
 	return
 }
 
-func GetEvents(ctx context.Context, conn *pgx.Conn) (result []Event, err error) {
-	err = pgxscan.Select(ctx, conn, &result, "SELECT id, event_type, event_data FROM events ORDER BY created_at")
+func GetEvents(ctx context.Context, tx pgx.Tx) (result []Event, err error) {
+	err = pgxscan.Select(ctx, tx, &result, selEventsQuery)
 	return
 }
 
@@ -103,7 +140,7 @@ type Event struct {
 	EventData string    `json:"event_data" db:"event_data"`
 }
 
-type User struct {
-	Id   int    `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
-}
+// type User struct {
+// 	Id   int    `json:"id" db:"id"`
+// 	Name string `json:"name" db:"name"`
+// }
